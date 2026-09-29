@@ -379,7 +379,43 @@ h1 em {
 }
 
 .speed-control {
+	display: grid;
+	gap: 6px;
 	justify-items: start;
+}
+
+.speed-stepper {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.speed-step-button {
+	width: 30px;
+	height: 30px;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	border: 1px solid var(--line-bright);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--lime);
+	font-size: 16px;
+	line-height: 1;
+	transition: background 130ms ease, color 130ms ease, border-color 130ms ease;
+}
+
+.speed-step-button:hover:not(:disabled) {
+	border-color: var(--lime-soft);
+	background: var(--surface-high);
+	color: var(--ink);
+}
+
+.speed-value {
+	min-width: 35px;
+	color: var(--ink);
+	font: 11px var(--mono);
+	text-align: center;
 }
 
 .content-grid {
@@ -482,7 +518,7 @@ h1 em {
 	border-radius: 2px 2px 0 0;
 	background: linear-gradient(180deg, #a7ce5b 0%, #759b3d 100%);
 	box-shadow: 0 0 12px rgba(166, 206, 91, 0.055);
-	transition: height 150ms ease, background-color 150ms ease, border-color 150ms ease;
+	transition: height var(--bar-duration, 150ms) ease, background-color 80ms ease, border-color 80ms ease;
 }
 
 .bar-value {
@@ -498,6 +534,10 @@ h1 em {
 .bar:nth-child(4n) .bar-value,
 .bar:nth-child(5n) .bar-value {
 	opacity: 0.74;
+}
+
+.sort-stage.is-dense .bar-value {
+	display: none;
 }
 
 .bar.is-comparing .bar-fill {

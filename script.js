@@ -6,6 +6,8 @@ const GRID_ROWS = 13;
 const GRID_COLUMNS = 25;
 const GRID_START = Math.floor(GRID_ROWS / 2) * GRID_COLUMNS + 2;
 const GRID_END = Math.floor(GRID_ROWS / 2) * GRID_COLUMNS + GRID_COLUMNS - 3;
+const SPEED_LEVELS = [1, 2, 4, 8, 16];
+const BASE_STEP_DELAY = 160;
 
 const algorithms = {
 	bubble: {
@@ -125,7 +127,9 @@ const elements = {
 	clearWalls: document.querySelector("#clear-walls"),
 	randomizeWalls: document.querySelector("#randomize-walls"),
 	graphPreset: document.querySelector("#graph-preset"),
-	speed: document.querySelector("#speed-control"),
+	speedDown: document.querySelector("#speed-down"),
+	speedUp: document.querySelector("#speed-up"),
+	speedValue: document.querySelector("#speed-value"),
 	reset: document.querySelector("#reset-button"),
 	step: document.querySelector("#step-button"),
 	play: document.querySelector("#play-button"),
@@ -166,6 +170,7 @@ const state = {
 	cursor: -1,
 	timer: null,
 	dragMode: null,
+	speedIndex: 0,
 };
 
 const viewDefaults = { sorting: "bubble", pathfinding: "bfs", graph: "graph-bfs" };
@@ -220,6 +225,22 @@ function currentEvent() {
 	return state.cursor >= 0 ? state.events[state.cursor] : null;
 }
 
+function playbackDelay() {
+	return BASE_STEP_DELAY / SPEED_LEVELS[state.speedIndex];
+}
+
+function updateSpeedControl() {
+	elements.speedValue.textContent = `${SPEED_LEVELS[state.speedIndex]}x`;
+	elements.speedDown.disabled = state.speedIndex === 0;
+	elements.speedUp.disabled = state.speedIndex === SPEED_LEVELS.length - 1;
+	document.documentElement.style.setProperty("--bar-duration", `${playbackDelay()}ms`);
+}
+
+function changeSpeed(direction) {
+	state.speedIndex = Math.max(0, Math.min(SPEED_LEVELS.length - 1, state.speedIndex + direction));
+	updateSpeedControl();
+}
+
 function advance() {
 	if (state.cursor >= state.events.length - 1) {
 		stopPlayback("COMPLETE");
@@ -262,7 +283,7 @@ function play() {
 			render();
 			return;
 		}
-		state.timer = window.setTimeout(tick, Number(elements.speed.value));
+		state.timer = window.setTimeout(tick, playbackDelay());
 	};
 	state.timer = window.setTimeout(tick, 0);
 }
@@ -272,6 +293,7 @@ function renderSort(frame) {
 	const maximum = Math.max(1, ...values);
 	const active = new Set(frame?.indices ?? []);
 	const complete = frame?.type === "done";
+	elements.sortStage.classList.toggle("is-dense", values.length > 80);
 	elements.sortStage.innerHTML = values.map((value, index) => {
 		const classes = ["bar"];
 		if (complete) classes.push("is-sorted");
@@ -530,6 +552,8 @@ elements.graphPreset.addEventListener("change", () => {
 	state.graphStart = currentGraph().start;
 	resetTimeline();
 });
+elements.speedDown.addEventListener("click", () => changeSpeed(-1));
+elements.speedUp.addEventListener("click", () => changeSpeed(1));
 elements.gridStage.addEventListener("pointerdown", handleGridPointerDown);
 elements.gridStage.addEventListener("pointermove", handleGridPointerMove);
 elements.gridStage.addEventListener("pointerup", () => { state.dragMode = null; });
@@ -541,5 +565,6 @@ elements.graphStage.addEventListener("keydown", handleGraphKeydown);
 
 state.values = randomArray(Number(elements.arraySize.value));
 state.events = createTimeline();
+updateSpeedControl();
 for (const tab of elements.tabs) tab.tabIndex = tab.dataset.view === "sorting" ? 0 : -1;
 render();
