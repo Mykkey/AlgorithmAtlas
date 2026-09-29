@@ -8,6 +8,27 @@ const GRID_START = Math.floor(GRID_ROWS / 2) * GRID_COLUMNS + 2;
 const GRID_END = Math.floor(GRID_ROWS / 2) * GRID_COLUMNS + GRID_COLUMNS - 3;
 const SPEED_LEVELS = [1, 2, 4, 8, 16];
 const BASE_STEP_DELAY = 160;
+const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+let soundContext = null;
+let decodedStepSound = null;
+
+try {
+	soundContext = AudioContextConstructor ? new AudioContextConstructor() : null;
+} catch {
+	soundContext = null;
+}
+
+const stepSoundBuffer = soundContext
+	? fetch(new URL("./blipSelect.wav", import.meta.url))
+		.then((response) => {
+			if (!response.ok) throw new Error("Could not load step sound.");
+			return response.arrayBuffer();
+		})
+		.then((data) => soundContext.decodeAudioData(data))
+		.catch(() => null)
+	: Promise.resolve(null);
+
+stepSoundBuffer.then((buffer) => { decodedStepSound = buffer; });
 
 const algorithms = {
 	bubble: {
@@ -242,13 +263,50 @@ function changeSpeed(direction) {
 	updateSpeedControl();
 }
 
+function unlockStepAudio() {
+	if (soundContext?.state === "suspended") soundContext.resume().catch(() => {});
+}
+
+function playStepSound(stepIndex) {
+	if (!soundContext) return;
+	unlockStepAudio();
+	if (!decodedStepSound) {
+		stepSoundBuffer.then((buffer) => {
+			if (buffer && state.cursor === stepIndex) playStepSoundAtPitch(buffer, stepIndex);
+		});
+		return;
+	}
+	playStepSoundAtPitch(decodedStepSound, stepIndex);
+}
+
+function playStepSoundAtPitch(buffer, stepIndex) {
+	const progress = state.events.length > 1 ? stepIndex / (state.events.length - 1) : 0;
+	const source = soundContext.createBufferSource();
+	const gain = soundContext.createGain();
+	const now = soundContext.currentTime;
+	const rate = 0.8 + Math.min(1, progress) * 1.8;
+	source.buffer = buffer;
+	source.playbackRate.setValueAtTime(rate, now);
+	gain.gain.setValueAtTime(0.14, now);
+	gain.gain.exponentialRampToValueAtTime(0.001, now + buffer.duration / rate);
+	source.connect(gain);
+	gain.connect(soundContext.destination);
+	source.start(now);
+}
+
+function stepForward() {
+	if (state.cursor >= state.events.length - 1) return false;
+	state.cursor += 1;
+	playStepSound(state.cursor);
+	render();
+	return true;
+}
+
 function advance() {
-	if (state.cursor >= state.events.length - 1) {
+	if (!stepForward()) {
 		stopPlayback("COMPLETE");
 		return false;
 	}
-	state.cursor += 1;
-	render();
 	if (state.cursor === state.events.length - 1) {
 		stopPlayback("COMPLETE");
 		render();
@@ -263,6 +321,7 @@ function play() {
 		stopPlayback("PAUSED");
 		return;
 	}
+	unlockStepAudio();
 	if (state.cursor >= state.events.length - 1) {
 		state.cursor = -1;
 		render();
@@ -272,14 +331,7 @@ function play() {
 	setRunStatus("RUNNING", "active");
 
 	const tick = () => {
-		if (state.cursor >= state.events.length - 1) {
-			stopPlayback("COMPLETE");
-			render();
-			return;
-		}
-		state.cursor += 1;
-		render();
-		if (state.cursor >= state.events.length - 1) {
+		if (!stepForward() || state.cursor >= state.events.length - 1) {
 			stopPlayback("COMPLETE");
 			render();
 			return;
