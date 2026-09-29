@@ -660,19 +660,26 @@ h1 em {
 .graph-stage {
 	display: grid;
 	place-items: center;
+	overflow: hidden;
 	padding: 15px 18px;
 }
 
 .graph-svg {
 	width: 100%;
+	height: 100%;
 	max-height: 100%;
-	overflow: visible;
+	overflow: hidden;
 }
 
 .graph-edge {
 	stroke: #45534a;
 	stroke-width: 2;
 	transition: stroke 160ms ease;
+}
+
+.graph-edge.is-active {
+	stroke: var(--lime-soft);
+	stroke-width: 3;
 }
 
 .graph-node {
@@ -742,6 +749,14 @@ h1 em {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.speed-control-inline {
+	margin-left: 8px;
+}
+
+.speed-control-inline .field-label {
+	font-size: 8px;
 }
 
 .icon-button {
@@ -1252,6 +1267,11 @@ h1 em {
 
 	.playback-actions {
 		justify-content: start;
+		gap: 6px;
+	}
+
+	.speed-control-inline {
+		margin-left: 3px;
 	}
 
 	.learning-panel {

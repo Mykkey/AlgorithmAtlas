@@ -78,14 +78,6 @@
 							</select>
 						</div>
 						<div class="toolbar-spacer"></div>
-						<div class="speed-control">
-							<span class="field-label" id="speed-label">PLAYBACK SPEED</span>
-							<div class="speed-stepper" role="group" aria-labelledby="speed-label">
-								<button class="speed-step-button" id="speed-down" type="button" aria-label="Slow down" title="Slow down"><span aria-hidden="true">&#171;</span></button>
-								<output class="speed-value" id="speed-value" aria-label="Playback speed" aria-live="polite">1x</output>
-								<button class="speed-step-button" id="speed-up" type="button" aria-label="Speed up" title="Speed up"><span aria-hidden="true">&#187;</span></button>
-							</div>
-						</div>
 					</div>
 
 					<div class="content-grid">
@@ -128,6 +120,14 @@
 									<button class="icon-button" id="reset-button" type="button" aria-label="Reset visualization" title="Reset"><span aria-hidden="true">&#8635;</span></button>
 									<button class="icon-button" id="step-button" type="button" aria-label="Advance one step" title="Step forward"><span aria-hidden="true">&#8594;</span></button>
 									<button class="play-button" id="play-button" type="button"><span class="play-icon" aria-hidden="true">&#9654;</span><span id="play-label">Run</span></button>
+									<div class="speed-control speed-control-inline">
+										<span class="field-label" id="speed-label">PLAYBACK SPEED</span>
+										<div class="speed-stepper" role="group" aria-labelledby="speed-label">
+											<button class="speed-step-button" id="speed-down" type="button" aria-label="Slow down" title="Slow down"><span aria-hidden="true">&#171;</span></button>
+											<output class="speed-value" id="speed-value" aria-label="Playback speed" aria-live="polite">1x</output>
+											<button class="speed-step-button" id="speed-up" type="button" aria-label="Speed up" title="Speed up"><span aria-hidden="true">&#187;</span></button>
+										</div>
+									</div>
 								</div>
 								<div class="progress-wrap">
 									<div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>

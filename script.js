@@ -170,6 +170,7 @@ const state = {
 	cursor: -1,
 	timer: null,
 	dragMode: null,
+	lastDraggedCell: null,
 	speedIndex: 0,
 };
 
@@ -335,13 +336,20 @@ function renderGraph(frame) {
 	const visited = new Set(frame?.visited ?? []);
 	const frontier = new Set(frame?.frontier ?? []);
 	const current = frame?.current;
-	const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+	const compact = window.matchMedia("(max-width: 580px)").matches;
+	const viewBox = compact ? "0 0 424 470" : "0 0 720 350";
+	const mobilePositions = { A: [212, 55], B: [92, 143], C: [332, 143], D: [212, 231], E: [92, 319], F: [332, 319], G: [212, 407] };
+	const nodeById = new Map(graph.nodes.map((node) => {
+		const [x, y] = compact ? mobilePositions[node.id] : [node.x, node.y];
+		return [node.id, { ...node, x, y }];
+	}));
 	const edges = graph.edges.map(([first, second]) => {
 		const from = nodeById.get(first);
 		const to = nodeById.get(second);
-		return `<line class="graph-edge" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" />`;
+		const active = (visited.has(first) && frontier.has(second)) || (visited.has(second) && frontier.has(first));
+		return `<line class="graph-edge ${active ? "is-active" : ""}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" />`;
 	}).join("");
-	const nodes = graph.nodes.map((node) => {
+	const nodes = [...nodeById.values()].map((node) => {
 		const classes = ["graph-node"];
 		if (visited.has(node.id)) classes.push("is-visited");
 		if (frontier.has(node.id)) classes.push("is-frontier");
@@ -349,7 +357,7 @@ function renderGraph(frame) {
 		if (node.id === state.graphStart) classes.push("is-start");
 		return `<g class="${classes.join(" ")}" data-node="${node.id}" role="button" tabindex="0" aria-label="Start traversal at ${node.label}" transform="translate(${node.x} ${node.y})"><circle r="25"></circle><text class="node-letter" y="5">${node.id}</text><text class="node-label" y="47">${node.label}</text></g>`;
 	}).join("");
-	elements.graphStage.innerHTML = `<svg class="graph-svg" viewBox="0 0 720 350" role="group" aria-label="${graph.name}"><g aria-hidden="true">${edges}</g>${nodes}</svg>`;
+	elements.graphStage.innerHTML = `<svg class="graph-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="${graph.name}"><g aria-hidden="true">${edges}</g>${nodes}</svg>`;
 }
 
 function renderGuide(frame) {
@@ -473,14 +481,34 @@ function toggleWall(index) {
 }
 
 function handleGridPointerDown(event) {
+	if (event.button !== 0) return;
 	const cell = event.target.closest("[data-cell]");
 	if (!cell) return;
 	const index = Number(cell.dataset.cell);
+	if (event.isTrusted) elements.gridStage.setPointerCapture?.(event.pointerId);
+	state.lastDraggedCell = null;
 	if (index === state.start || index === state.end) {
 		state.dragMode = index === state.start ? "start" : "end";
-		elements.gridStage.setPointerCapture?.(event.pointerId);
-		event.preventDefault();
+	} else {
+		state.dragMode = state.walls.has(index) ? "wall-remove" : "wall-add";
 	}
+	event.preventDefault();
+	applyGridDrag(index);
+}
+
+function applyGridDrag(index) {
+	if (state.lastDraggedCell === index) return;
+	state.lastDraggedCell = index;
+	if (state.dragMode === "start" || state.dragMode === "end") {
+		moveEndpoint(state.dragMode, index);
+		return;
+	}
+	if (index === state.start || index === state.end) return;
+	const shouldBeWall = state.dragMode === "wall-add";
+	if (state.walls.has(index) === shouldBeWall) return;
+	if (shouldBeWall) state.walls.add(index);
+	else state.walls.delete(index);
+	resetTimeline();
 }
 
 function handleGridPointerMove(event) {
@@ -488,10 +516,11 @@ function handleGridPointerMove(event) {
 	const hovered = document.elementFromPoint(event.clientX, event.clientY);
 	const cell = hovered?.closest("[data-cell]");
 	if (!cell || !state.dragMode) return;
-	moveEndpoint(state.dragMode, Number(cell.dataset.cell));
+	applyGridDrag(Number(cell.dataset.cell));
 }
 
 function handleGridClick(event) {
+	if (event.detail !== 0) return;
 	const cell = event.target.closest("[data-cell]");
 	if (!cell) return;
 	toggleWall(Number(cell.dataset.cell));
@@ -556,12 +585,15 @@ elements.speedDown.addEventListener("click", () => changeSpeed(-1));
 elements.speedUp.addEventListener("click", () => changeSpeed(1));
 elements.gridStage.addEventListener("pointerdown", handleGridPointerDown);
 elements.gridStage.addEventListener("pointermove", handleGridPointerMove);
-elements.gridStage.addEventListener("pointerup", () => { state.dragMode = null; });
-elements.gridStage.addEventListener("pointercancel", () => { state.dragMode = null; });
+elements.gridStage.addEventListener("pointerup", () => { state.dragMode = null; state.lastDraggedCell = null; });
+elements.gridStage.addEventListener("pointercancel", () => { state.dragMode = null; state.lastDraggedCell = null; });
 elements.gridStage.addEventListener("click", handleGridClick);
 elements.gridStage.addEventListener("keydown", handleGridKeydown);
 elements.graphStage.addEventListener("click", chooseGraphStart);
 elements.graphStage.addEventListener("keydown", handleGraphKeydown);
+window.addEventListener("resize", () => {
+	if (state.view === "graph") renderGraph(currentEvent());
+});
 
 state.values = randomArray(Number(elements.arraySize.value));
 state.events = createTimeline();
