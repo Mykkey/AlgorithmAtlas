@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#101411" />
+		<meta name="description" content="An interactive, step-by-step algorithm visualization lab." />
+		<title>Algorithm Atlas | Visualize the process</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="style.css" />
+		<script type="module" src="script.js"></script>
+	</head>
+	<body>
+		<div class="app-shell">
+			<header class="topbar">
+				<a class="brand" href="#top" aria-label="Algorithm Atlas home">
+					<span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+					<span>algorithm<span class="brand-light">atlas</span></span>
+				</a>
+				<nav class="view-tabs" aria-label="Visualization type" role="tablist">
+					<button class="view-tab is-active" id="tab-sorting" type="button" role="tab" aria-selected="true" aria-controls="workspace" data-view="sorting"><span class="tab-index">01</span>Sorting</button>
+					<button class="view-tab" id="tab-pathfinding" type="button" role="tab" aria-selected="false" aria-controls="workspace" data-view="pathfinding"><span class="tab-index">02</span>Pathfinding</button>
+					<button class="view-tab" id="tab-graph" type="button" role="tab" aria-selected="false" aria-controls="workspace" data-view="graph"><span class="tab-index">03</span>Graph traversal</button>
+				</nav>
+				<div class="topbar-note"><span class="status-dot"></span> INTERACTIVE LAB</div>
+			</header>
+
+			<main id="top">
+				<section class="intro" aria-labelledby="page-title">
+					<div>
+						<p class="eyebrow"><span class="eyebrow-rule"></span> ALGORITHM EXPLORER <span class="eyebrow-version">FIELD NOTES / 01</span></p>
+						<h1 id="page-title">See how it <em>thinks.</em></h1>
+					</div>
+					<p class="intro-copy">Follow each decision, one operation at a time.<br />Change the input. Watch the strategy unfold.</p>
+				</section>
+
+				<section class="workspace" id="workspace" role="tabpanel" aria-labelledby="tab-sorting">
+					<div class="workspace-toolbar">
+						<div class="selector-group">
+							<label class="field-label" for="algorithm-select">ALGORITHM</label>
+							<select id="algorithm-select" class="select-control">
+								<optgroup label="Sorting">
+									<option value="bubble">Bubble sort</option>
+									<option value="selection">Selection sort</option>
+									<option value="insertion">Insertion sort</option>
+									<option value="merge">Merge sort</option>
+									<option value="quick">Quick sort</option>
+									<option value="heap">Heap sort</option>
+								</optgroup>
+								<optgroup label="Pathfinding">
+									<option value="bfs">Breadth-first search</option>
+									<option value="dfs">Depth-first search</option>
+									<option value="dijkstra">Dijkstra's algorithm</option>
+									<option value="astar">A* search</option>
+								</optgroup>
+								<optgroup label="Graph traversal">
+									<option value="graph-bfs">Graph BFS</option>
+									<option value="graph-dfs">Graph DFS</option>
+								</optgroup>
+							</select>
+						</div>
+						<div class="toolbar-divider" aria-hidden="true"></div>
+						<div class="view-options" id="sorting-options">
+							<label class="range-field" for="array-size"><span class="field-label">ARRAY SIZE</span><span class="range-readout"><output id="array-size-value" for="array-size">36</output><span> items</span></span><input id="array-size" type="range" min="8" max="64" value="36" /></label>
+							<button class="quiet-button" id="randomize-array" type="button"><span aria-hidden="true">&#8635;</span> Randomize</button>
+						</div>
+						<div class="view-options is-hidden" id="path-options" hidden>
+							<button class="quiet-button" id="clear-walls" type="button"><span aria-hidden="true">&#9003;</span> Clear walls</button>
+							<button class="quiet-button" id="randomize-walls" type="button"><span aria-hidden="true">&#10038;</span> Scatter walls</button>
+						</div>
+						<div class="view-options is-hidden" id="graph-options" hidden>
+							<label class="field-label" for="graph-preset">NETWORK</label>
+							<select id="graph-preset" class="select-control select-compact">
+								<option value="campus">Campus links</option>
+								<option value="transit">Transit map</option>
+							</select>
+						</div>
+						<div class="toolbar-spacer"></div>
+						<div class="speed-control">
+							<label class="field-label" for="speed-control">PACE</label>
+							<select id="speed-control" class="select-control select-compact" aria-label="Animation speed">
+								<option value="700">Slow</option>
+								<option value="300" selected>Steady</option>
+								<option value="90">Fast</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="content-grid">
+						<section class="visual-panel" aria-label="Algorithm visualization">
+							<div class="visual-heading">
+								<div class="visual-heading-copy">
+									<span class="section-kicker" id="visual-kicker">SORT / ARRAY</span>
+									<h2 id="visual-title">A field of values</h2>
+								</div>
+								<div class="run-status" id="run-status"><span class="status-dot"></span><span id="run-status-text">READY</span></div>
+							</div>
+
+							<div class="visual-stage sort-stage" id="sort-stage" aria-label="Sorting array visualization"></div>
+							<div class="visual-stage grid-stage is-hidden" id="grid-stage" role="grid" aria-label="Pathfinding grid" hidden></div>
+							<div class="visual-stage graph-stage is-hidden" id="graph-stage" aria-label="Graph traversal visualization" hidden></div>
+
+							<div class="legend" id="sort-legend">
+								<span><i class="legend-swatch swatch-default"></i>Unsorted</span>
+								<span><i class="legend-swatch swatch-compare"></i>Comparing</span>
+								<span><i class="legend-swatch swatch-write"></i>Writing</span>
+								<span><i class="legend-swatch swatch-done"></i>Sorted</span>
+							</div>
+							<div class="legend is-hidden" id="path-legend" hidden>
+								<span><i class="legend-swatch swatch-start"></i>Start</span>
+								<span><i class="legend-swatch swatch-end"></i>Finish</span>
+								<span><i class="legend-swatch swatch-frontier"></i>Frontier</span>
+								<span><i class="legend-swatch swatch-visited"></i>Visited</span>
+								<span><i class="legend-swatch swatch-path"></i>Path</span>
+								<span><i class="legend-swatch swatch-wall"></i>Wall</span>
+							</div>
+							<div class="legend is-hidden" id="graph-legend" hidden>
+								<span><i class="legend-swatch swatch-default"></i>Unvisited</span>
+								<span><i class="legend-swatch swatch-frontier"></i>Frontier</span>
+								<span><i class="legend-swatch swatch-compare"></i>Current</span>
+								<span><i class="legend-swatch swatch-done"></i>Visited</span>
+							</div>
+
+							<div class="playback">
+								<div class="playback-actions">
+									<button class="icon-button" id="reset-button" type="button" aria-label="Reset visualization" title="Reset"><span aria-hidden="true">&#8635;</span></button>
+									<button class="icon-button" id="step-button" type="button" aria-label="Advance one step" title="Step forward"><span aria-hidden="true">&#8594;</span></button>
+									<button class="play-button" id="play-button" type="button"><span class="play-icon" aria-hidden="true">&#9654;</span><span id="play-label">Run</span></button>
+								</div>
+								<div class="progress-wrap">
+									<div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+									<div class="progress-meta"><span id="step-count">0 / 0 steps</span><span id="operation-count">0 operations</span></div>
+								</div>
+							</div>
+						</section>
+
+						<aside class="learning-panel" aria-labelledby="algorithm-title">
+							<div class="learning-heading">
+								<p class="section-kicker">FIELD GUIDE <span id="guide-index">/ 01</span></p>
+								<span class="complexity-badge" id="complexity-badge">O(n<sup>2</sup>)</span>
+							</div>
+							<h2 id="algorithm-title">Bubble sort</h2>
+							<p class="algorithm-description" id="algorithm-description"></p>
+							<div class="metric-row">
+								<div class="metric"><span class="field-label">TIME</span><strong id="time-complexity">O(n<sup>2</sup>)</strong></div>
+								<div class="metric"><span class="field-label">SPACE</span><strong id="space-complexity">O(1)</strong></div>
+								<div class="metric"><span class="field-label">STABLE</span><strong id="stability">Yes</strong></div>
+							</div>
+							<div class="guide-divider"></div>
+							<div class="guide-subhead"><span class="field-label">HOW IT WORKS</span><span class="guide-step" id="guide-step">01</span></div>
+							<p class="step-note" id="step-note">Choose an algorithm and run it to inspect each operation.</p>
+							<ol class="pseudocode" id="pseudocode"></ol>
+							<div class="guide-footer" id="guide-footer"><span class="footer-mark" aria-hidden="true">&#9670;</span><span>Different strategies. Same goal: a result you can verify.</span></div>
+						</aside>
+					</div>
+				</section>
+			</main>
+
+			<footer class="page-footer"><span>ALGORITHM ATLAS</span><span>BUILT FOR THE CURIOUS <i></i> 2026</span></footer>
+			<div class="sr-only" id="announcer" aria-live="polite" aria-atomic="true"></div>
+		</div>
+	</body>
+</html>
