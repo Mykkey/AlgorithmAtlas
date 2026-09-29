@@ -759,6 +759,37 @@ h1 em {
 	font-size: 8px;
 }
 
+.sound-toggle {
+	min-height: 31px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 0 8px;
+	border: 1px solid var(--line-bright);
+	border-radius: 3px;
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 10px;
+	white-space: nowrap;
+	transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.sound-toggle[aria-pressed="true"] {
+	border-color: #536447;
+	color: var(--lime);
+}
+
+.sound-toggle:hover {
+	border-color: var(--lime-soft);
+	background: var(--surface-high);
+	color: var(--ink);
+}
+
+.sound-toggle-icon {
+	font-size: 15px;
+}
+
 .icon-button {
 	width: 35px;
 	height: 35px;
@@ -1267,11 +1298,25 @@ h1 em {
 
 	.playback-actions {
 		justify-content: start;
-		gap: 6px;
+		flex-wrap: wrap;
+		gap: 4px;
 	}
 
 	.speed-control-inline {
-		margin-left: 3px;
+		margin-left: 1px;
+	}
+
+	.speed-step-button {
+		width: 26px;
+	}
+
+	.speed-value {
+		min-width: 26px;
+	}
+
+	.sound-toggle {
+		padding-inline: 6px;
+		font-size: 9px;
 	}
 
 	.learning-panel {

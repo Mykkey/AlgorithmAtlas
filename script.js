@@ -151,6 +151,8 @@ const elements = {
 	speedDown: document.querySelector("#speed-down"),
 	speedUp: document.querySelector("#speed-up"),
 	speedValue: document.querySelector("#speed-value"),
+	soundToggle: document.querySelector("#sound-toggle"),
+	soundToggleLabel: document.querySelector("#sound-toggle-label"),
 	reset: document.querySelector("#reset-button"),
 	step: document.querySelector("#step-button"),
 	play: document.querySelector("#play-button"),
@@ -193,6 +195,7 @@ const state = {
 	dragMode: null,
 	lastDraggedCell: null,
 	speedIndex: 0,
+	soundEnabled: true,
 };
 
 const viewDefaults = { sorting: "bubble", pathfinding: "bfs", graph: "graph-bfs" };
@@ -263,12 +266,26 @@ function changeSpeed(direction) {
 	updateSpeedControl();
 }
 
+function updateSoundControl() {
+	const action = state.soundEnabled ? "Mute step sounds" : "Enable step sounds";
+	elements.soundToggle.setAttribute("aria-pressed", String(state.soundEnabled));
+	elements.soundToggle.setAttribute("aria-label", action);
+	elements.soundToggle.title = action;
+	elements.soundToggleLabel.textContent = state.soundEnabled ? "Sound on" : "Sound off";
+}
+
+function toggleSound() {
+	state.soundEnabled = !state.soundEnabled;
+	if (state.soundEnabled) unlockStepAudio();
+	updateSoundControl();
+}
+
 function unlockStepAudio() {
-	if (soundContext?.state === "suspended") soundContext.resume().catch(() => {});
+	if (state.soundEnabled && soundContext?.state === "suspended") soundContext.resume().catch(() => {});
 }
 
 function playStepSound(stepIndex) {
-	if (!soundContext) return;
+	if (!state.soundEnabled || !soundContext) return;
 	unlockStepAudio();
 	if (!decodedStepSound) {
 		stepSoundBuffer.then((buffer) => {
@@ -284,7 +301,7 @@ function playStepSoundAtPitch(buffer, stepIndex) {
 	const source = soundContext.createBufferSource();
 	const gain = soundContext.createGain();
 	const now = soundContext.currentTime;
-	const rate = 0.8 + Math.min(1, progress) * 1.8;
+	const rate = 0.8 + Math.sqrt(Math.min(1, progress)) * 2.4;
 	source.buffer = buffer;
 	source.playbackRate.setValueAtTime(rate, now);
 	gain.gain.setValueAtTime(0.14, now);
@@ -635,6 +652,7 @@ elements.graphPreset.addEventListener("change", () => {
 });
 elements.speedDown.addEventListener("click", () => changeSpeed(-1));
 elements.speedUp.addEventListener("click", () => changeSpeed(1));
+elements.soundToggle.addEventListener("click", toggleSound);
 elements.gridStage.addEventListener("pointerdown", handleGridPointerDown);
 elements.gridStage.addEventListener("pointermove", handleGridPointerMove);
 elements.gridStage.addEventListener("pointerup", () => { state.dragMode = null; state.lastDraggedCell = null; });
@@ -650,5 +668,6 @@ window.addEventListener("resize", () => {
 state.values = randomArray(Number(elements.arraySize.value));
 state.events = createTimeline();
 updateSpeedControl();
+updateSoundControl();
 for (const tab of elements.tabs) tab.tabIndex = tab.dataset.view === "sorting" ? 0 : -1;
 render();
